@@ -23,6 +23,18 @@ final class SPCShapefileTests: XCTestCase {
         }
     }
     
+    func testFullShapefileParserData() throws {
+        try forEachMock {
+            print("Testing full shapefile parser w/ data: \($0)")
+            let shp = try Shapefile(
+                shpData: try .init(contentsOf: $0.shpFile),
+                dbfData: try .init(contentsOf: $0.dbfFile)
+            )
+            XCTAssertTrue(shp.records.count > 0, "No shapes found in the test \($0).shp file")
+            XCTAssertTrue(shp.records.allSatisfy { $0.attributes != nil })
+        }
+    }
+    
     func testShapefileAttributes() throws {
         try forEachMock {
             print("Testing attributes parser: \($0)")

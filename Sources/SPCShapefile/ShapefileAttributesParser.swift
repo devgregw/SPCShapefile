@@ -16,12 +16,12 @@ struct ShapefileAttributesParser {
     
     let attributes: [[String: String]]
     
-    init(file url: URL) throws {
-        var data = try Data(contentsOf: url)
-        
+    /// Parses a `dbf` file from an in-memory representation
+    /// - Parameter data: `dbf` file data buffer.
+    init(data: Data) throws {
         let count = try UInt8(data[4..<8], endianness: .little)
         
-        data = data.dropFirst(headerSize)
+        var data = data.dropFirst(headerSize)
         
         let fields: [Field] = data
             .prefix { $0 != headerTerminator }
@@ -64,5 +64,11 @@ struct ShapefileAttributesParser {
                 )
             }
         }
+    }
+    
+    /// Parses a `dbf` file given a file URL.
+    /// - Parameter url: The file to open.
+    init(file url: URL) throws {
+        self = try .init(data: try .init(contentsOf: url))
     }
 }

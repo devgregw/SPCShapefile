@@ -21,23 +21,19 @@ public struct Shapefile {
     /// The shapes contained in this file.
     public let records: [Shape]
     
-    /// Creates a shapefile from a file URL.
-    /// - Parameter file: A file URL pointing to the shapefile.
-    /// - Parameter loadAttributes: Whether to load the shapefile's associated DBF attributes file. (Default: `true`)
-    ///
-    /// If `loadAttributes` is `true`, then another file with the same name as your shapefile, but with a `.dbf` extension,
-    /// must exist in the same directory as the shapefile. For example, if you're opening `~/shapefile.shp`, then `~/shapefile.dbf`
-    /// must also exist; otherwise, an error will be thrown. If `loadAttributes` is `false`, then this rule is not enforced and
-    /// `attributes` will be `nil`.
-    public init(file: URL, loadAttributes: Bool = true) throws {
+    /// Creates a shapefile from an in-memory representation.
+    /// - Parameters:
+    ///   - shpData: Data buffer for the `shp` file.
+    ///   - dbfData: Optional: Data buffer for the corresponding `dbf` file.
+    public init(shpData: Data, dbfData: Data?) throws {
         let attributes: [[String: String]]?
-        if loadAttributes {
-            attributes = try ShapefileAttributesParser(file: file.replacingPathExtension(with: "dbf")).attributes
+        if let dbfData {
+            attributes = try ShapefileAttributesParser(data: dbfData).attributes
         } else {
             attributes = nil
         }
         
-        var data = try Data(contentsOf: file)
+        var data = shpData
         
         let fileCode = try data.next(UInt32.self, endianness: .big)
         guard Shapefile.expectedFileCode == fileCode else {
@@ -82,5 +78,20 @@ public struct Shapefile {
             } while shape != nil
         }
         self.records = shapes
+    }
+    
+    /// Creates a shapefile from a file URL.
+    /// - Parameter file: A file URL pointing to the shapefile.
+    /// - Parameter loadAttributes: Whether to load the shapefile's associated DBF attributes file. (Default: `true`)
+    ///
+    /// If `loadAttributes` is `true`, then another file with the same name as your shapefile, but with a `.dbf` extension,
+    /// must exist in the same directory as the shapefile. For example, if you're opening `~/shapefile.shp`, then `~/shapefile.dbf`
+    /// must also exist; otherwise, an error will be thrown. If `loadAttributes` is `false`, then this rule is not enforced and
+    /// `attributes` will be `nil`.
+    public init(file: URL, loadAttributes: Bool = true) throws {
+        self = try .init(
+            shpData: try .init(contentsOf: file),
+            dbfData: loadAttributes ? try .init(contentsOf: file.replacingPathExtension(with: "dbf")) : nil
+        )
     }
 }
