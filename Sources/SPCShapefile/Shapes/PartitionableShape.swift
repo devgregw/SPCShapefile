@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol PartitionableShape: Shape {
+public protocol PartitionableShape: Shape {
     var partCount: UInt32 { get }
     var pointCount: UInt32 { get }
     var parts: [UInt32] { get }
@@ -16,7 +16,7 @@ protocol PartitionableShape: Shape {
     var partitioned: [ArraySlice<CGPoint>] { get }
 }
 
-extension PartitionableShape {
+public extension PartitionableShape {
     var partitioned: [ArraySlice<CGPoint>] {
         parts
             .map { Int($0) }
